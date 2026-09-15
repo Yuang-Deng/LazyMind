@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+	registerAdditionalError("invalid local directory grant", http.StatusBadRequest, 2002701)
 	registerAdditionalError("executor unauthorized", http.StatusUnauthorized, 2001596)
 	registerAdditionalError("model config unavailable", http.StatusServiceUnavailable, 2001597)
 	registerAdditionalError("invalid task event", http.StatusBadRequest, 2001598)

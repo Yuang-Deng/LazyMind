@@ -1,3 +1,4 @@
+import { listLocalDirectoryGrants } from "../api/localDirectoryGrants";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { message } from "antd";
 import { useTranslation } from "react-i18next";
@@ -45,9 +46,12 @@ export function useLocalDataSourceSettings() {
 
   const refreshLocalSourceCount = useCallback(async () => {
     try {
-      const response = await dataSourceScanApi.listSources({ page: 1, pageSize: 200 });
+      const [response, grants] = await Promise.all([
+        dataSourceScanApi.listSources({ page: 1, pageSize: 200 }),
+        listLocalDirectoryGrants(),
+      ]);
       const items = (response.data.items || []) as ScanV2Source[];
-      setLocalSourceCount(items.filter((item) => inferSourceKind(item) === "local").length);
+      setLocalSourceCount(items.filter((item) => inferSourceKind(item) === "local").length + grants.length);
     } catch (error) {
       console.error("Failed to refresh local source count", error);
     }

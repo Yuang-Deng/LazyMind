@@ -156,7 +156,7 @@ func revalidateForkHistoryAttachments(ctx context.Context, db *gorm.DB, caller d
 		r.Header.Set("Authorization", caller.Authorization)
 		r.Header.Set("X-Tenant-ID", caller.TenantID)
 		r.Header.Set("X-User-Role", caller.UserRole)
-		sources, err := loadLocalFSSourcesForChat(ctx, r, caller.UserID)
+		sources, err := loadLocalFSSourcesForChat(ctx, r, db, caller.UserID)
 		if err != nil {
 			return nil, err
 		}

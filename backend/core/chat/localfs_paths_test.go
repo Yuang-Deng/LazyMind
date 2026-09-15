@@ -12,7 +12,7 @@ import (
 )
 
 func TestApplyLocalFSPathsForChatAddsActiveLocalBindings(t *testing.T) {
-	db := orm.MigrateTestDB(t, &orm.LocalFSChatSetting{})
+	db := orm.MigrateTestDB(t, &orm.LocalFSChatSetting{}, &orm.LocalDirectoryGrant{})
 	now := time.Now()
 	if err := db.Create(&orm.LocalFSChatSetting{
 		CreateUserID:   "u1",
@@ -84,7 +84,7 @@ func TestApplyLocalFSPathsForChatAddsActiveLocalBindings(t *testing.T) {
 }
 
 func TestApplyLocalFSPathsForChatFiltersByBindingChatEnabled(t *testing.T) {
-	db := orm.MigrateTestDB(t, &orm.LocalFSChatSetting{})
+	db := orm.MigrateTestDB(t, &orm.LocalFSChatSetting{}, &orm.LocalDirectoryGrant{})
 	now := time.Now()
 	if err := db.Create(&orm.LocalFSChatSetting{
 		CreateUserID:   "u1",
@@ -146,5 +146,50 @@ func TestApplyLocalFSPathsForChatFiltersByBindingChatEnabled(t *testing.T) {
 	exts := entry["file_extensions"].([]string)
 	if len(exts) != 1 || exts[0] != "pdf" {
 		t.Fatalf("unexpected file_extensions: %#v, want [pdf]", exts)
+	}
+}
+
+func TestIndependentLocalGrantsUseCurrentOwnerAndSnapshot(t *testing.T) {
+	db := orm.MigrateTestDB(t, &orm.LocalDirectoryGrant{}, &orm.Conversation{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/scan/sources" {
+			t.Errorf("unexpected scan operation: %s %s", r.Method, r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"items":[],"total":0}`))
+	}))
+	defer server.Close()
+	t.Setenv("LAZYMIND_SCAN_CONTROL_PLANE_URL", server.URL)
+	for _, grant := range []orm.LocalDirectoryGrant{
+		{ID: "local-grant:old", UserID: "u1", Path: "/docs", FileExtensions: []string{"txt"}, CreatedAt: time.Now()},
+		{ID: "local-grant:new", UserID: "u1", Path: "/new", FileExtensions: []string{"md"}, CreatedAt: time.Now()},
+		{ID: "local-grant:other", UserID: "u2", Path: "/other", FileExtensions: []string{"txt"}, CreatedAt: time.Now()},
+	} {
+		if err := db.Create(&grant).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	req := httptest.NewRequest("POST", "/", nil)
+	body := map[string]any{"local_fs_sources": []map[string]any{{"source_id": "forged", "paths": []string{"/"}}}}
+	if err := applyLocalFSPathsForChat(req.Context(), req, db.DB, "u1", body); err != nil {
+		t.Fatal(err)
+	}
+	sources := body["local_fs_sources"].([]map[string]any)
+	if len(sources) != 2 || sources[0]["read_only"] != true {
+		t.Fatalf("sources: %v", sources)
+	}
+	// IDs are persisted through the same public snapshot used by legacy sources.
+	snapshot := mergeConversationConfigSnapshot(nil, body)
+	config := forkConfigFromHistory(orm.ChatHistory{Ext: snapshot})
+	if len(config.LocalFSSourceIDs) != 2 {
+		t.Fatalf("snapshot: %s", snapshot)
+	}
+	sources, err := loadSelectedLocalFSSourcesForChat(req.Context(), req, db.DB, "u1", []string{"local-grant:old"})
+	if err != nil || len(sources) != 1 || sources[0]["source_id"] != "local-grant:old" {
+		t.Fatalf("fork scope: %v %v", sources, err)
+	}
+	db.Where("id = ?", "local-grant:old").Delete(&orm.LocalDirectoryGrant{})
+	sources, err = loadSelectedLocalFSSourcesForChat(req.Context(), req, db.DB, "u1", []string{"local-grant:old"})
+	if err != nil || len(sources) != 0 {
+		t.Fatalf("revoked fork scope: %v %v", sources, err)
 	}
 }

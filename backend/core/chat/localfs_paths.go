@@ -69,7 +69,7 @@ func applyLocalFSPathsForChat(ctx context.Context, r *http.Request, db *gorm.DB,
 			}
 		}
 	}
-	sources, err := loadSelectedLocalFSSourcesForChat(ctx, r, userID, allowed)
+	sources, err := loadSelectedLocalFSSourcesForChat(ctx, r, db, userID, allowed)
 	if err != nil {
 		return err
 	}
@@ -77,11 +77,32 @@ func applyLocalFSPathsForChat(ctx context.Context, r *http.Request, db *gorm.DB,
 	return nil
 }
 
-func loadLocalFSSourcesForChat(ctx context.Context, r *http.Request, userID string) ([]map[string]any, error) {
-	return loadSelectedLocalFSSourcesForChat(ctx, r, userID, nil)
+func loadLocalFSSourcesForChat(ctx context.Context, r *http.Request, db *gorm.DB, userID string) ([]map[string]any, error) {
+	return loadSelectedLocalFSSourcesForChat(ctx, r, db, userID, nil)
 }
 
-func loadSelectedLocalFSSourcesForChat(ctx context.Context, r *http.Request, userID string, allowed []string) ([]map[string]any, error) {
+func loadSelectedLocalFSSourcesForChat(ctx context.Context, r *http.Request, db *gorm.DB, userID string, allowed []string) ([]map[string]any, error) {
+	// Independent grants use the existing request/snapshot scope contract, but are
+	// always read-only and never registered with the scan control plane.
+	grants := []orm.LocalDirectoryGrant{}
+	query := db.WithContext(ctx).Where("user_id = ?", userID)
+	if allowed != nil {
+		query = query.Where("id IN ?", allowed)
+	}
+	if err := query.Order("created_at, id").Find(&grants).Error; err != nil {
+		return nil, err
+	}
+	var sources []map[string]any
+	for _, grant := range grants {
+		extensions := grant.FileExtensions
+		if len(extensions) == 0 {
+			continue
+		}
+		sources = append(sources, map[string]any{
+			"source_id": grant.ID, "paths": []string{grant.Path},
+			"file_extensions": extensions, "read_only": true,
+		})
+	}
 	sourceIDs, err := listActiveSourceIDs(ctx, r, userID)
 	if err != nil {
 		fmt.Printf("[CORE_LOCALFS_DEBUG] listActiveSourceIDs error: %v\n", err)
@@ -89,7 +110,6 @@ func loadSelectedLocalFSSourcesForChat(ctx context.Context, r *http.Request, use
 	}
 	fmt.Printf("[CORE_LOCALFS_DEBUG] sourceIDs=%v\n", sourceIDs)
 
-	var sources []map[string]any
 	for _, sourceID := range sourceIDs {
 		if allowed != nil {
 			included := false

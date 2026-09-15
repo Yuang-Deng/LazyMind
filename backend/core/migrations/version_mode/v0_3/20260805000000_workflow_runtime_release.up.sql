@@ -1757,3 +1757,13 @@ ALTER TABLE vocabulary_review_sessions ADD COLUMN IF NOT EXISTS status VARCHAR(1
 ALTER TABLE vocabulary_review_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_vocabulary_review_sessions_active ON vocabulary_review_sessions(owner_id,provider,wordbook_id,completed_at,expires_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_vocabulary_review_session_word ON vocabulary_review_session_items(session_id,word_id);
+
+-- +migrate Dialect postgres,sqlite
+CREATE TABLE local_directory_grants (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    path TEXT NOT NULL,
+    file_extensions JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
+CREATE INDEX idx_local_directory_grants_user ON local_directory_grants (user_id);

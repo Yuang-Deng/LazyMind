@@ -355,7 +355,21 @@ def resolve_text_target(
     if workflow_target:
         return workflow_target
 
-    _, resolved = _resolve_workspace_path(key, user_id, conversation_id)
+    from lazyllm.tools.agent import ToolExecutionError
+    try:
+        _, resolved = _resolve_workspace_path(key, user_id, conversation_id)
+    except ToolExecutionError:
+        # Reuse existing readers only after checking local-source authorization.
+        # A Spotlight result alone never enters this authorization set.
+        if not os.path.isabs(key) or not _agentic_config().get('local_fs_sources'):
+            raise
+        from lazymind.chat.engine.tools.local_fs import LocalFileToolkit
+        local = LocalFileToolkit()
+        resolved, scope = local._resolve_with_scope(key)
+        local._ensure_visible_file(scope, resolved)
+        return _resolved_from_local_file(
+            resolved, os.path.basename(resolved), key, workspace, store,
+        )
     if os.path.isdir(resolved):
         if not allow_directory:
             raise ValueError('target must resolve to a text file')

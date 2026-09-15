@@ -2324,6 +2324,19 @@ export interface ListWordGroupsResponse {
     'next_page_token': string;
     'total_size': number;
 }
+export interface LocalDirectoryGrant {
+    'created_at': string;
+    'file_extensions'?: Array<string>;
+    'id': string;
+    'path': string;
+}
+export interface LocalDirectoryGrantRequest {
+    'file_extensions'?: Array<string>;
+    'path': string;
+}
+export interface LocalDirectoryGrantsResponse {
+    'items'?: Array<LocalDirectoryGrant>;
+}
 export interface LocalFSChatSettingOpenAPIRequest {
     'enabled': boolean;
 }
@@ -2766,8 +2779,8 @@ export interface RouterTrafficSummary {
 }
 export interface RunPerformanceMetrics {
     'cache_hit_rate'?: number;
-    'cached_tokens'?: number;
     'cache_input_tokens'?: number;
+    'cached_tokens'?: number;
     'context_input_tokens'?: number;
     'context_ratio'?: number;
     'input_tokens'?: number;
@@ -3703,6 +3716,18 @@ export interface TransferBinding {
     'stored_path'?: string;
     'target_document_id'?: string;
     'target_lazy_doc_id'?: string;
+}
+export interface TranslationOpenAPIRequest {
+    'target'?: string;
+    'text': string;
+}
+export interface TranslationOpenAPIResponse {
+    'source': string;
+    'target': string;
+    'translated_text': string;
+}
+export interface TranslationStatusOpenAPIResponse {
+    'configured': boolean;
 }
 export interface UnsetDefaultDatasetRequest {
     'name': string;
@@ -7634,6 +7659,105 @@ export const DataSourcesApiAxiosParamCreator = function (configuration?: Configu
         },
         /**
          *
+         * @summary List independent read-only local directories
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/core/data-sources/local-directory-grants`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Revoke a local directory grant
+         * @param {string} grant
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsGrantDelete: async (grant: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'grant' is not null or undefined
+            assertParamExists('apiCoreDataSourcesLocalDirectoryGrantsGrantDelete', 'grant', grant)
+            const localVarPath = `/api/core/data-sources/local-directory-grants/{grant}`
+                .replace(`{${"grant"}}`, encodeURIComponent(String(grant)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
+         * @summary Authorize on-demand local directory reading
+         * @param {LocalDirectoryGrantRequest} localDirectoryGrantRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsPost: async (localDirectoryGrantRequest: LocalDirectoryGrantRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'localDirectoryGrantRequest' is not null or undefined
+            assertParamExists('apiCoreDataSourcesLocalDirectoryGrantsPost', 'localDirectoryGrantRequest', localDirectoryGrantRequest)
+            const localVarPath = `/api/core/data-sources/local-directory-grants`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(localDirectoryGrantRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         *
          * @summary Get local filesystem chat setting
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7799,6 +7923,44 @@ export const DataSourcesApiFp = function(configuration?: Configuration) {
         },
         /**
          *
+         * @summary List independent read-only local directories
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiCoreDataSourcesLocalDirectoryGrantsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LocalDirectoryGrantsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiCoreDataSourcesLocalDirectoryGrantsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DataSourcesApi.apiCoreDataSourcesLocalDirectoryGrantsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Revoke a local directory grant
+         * @param {string} grant
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(grant: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(grant, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DataSourcesApi.apiCoreDataSourcesLocalDirectoryGrantsGrantDelete']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
+         * @summary Authorize on-demand local directory reading
+         * @param {LocalDirectoryGrantRequest} localDirectoryGrantRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiCoreDataSourcesLocalDirectoryGrantsPost(localDirectoryGrantRequest: LocalDirectoryGrantRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LocalDirectoryGrant>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiCoreDataSourcesLocalDirectoryGrantsPost(localDirectoryGrantRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DataSourcesApi.apiCoreDataSourcesLocalDirectoryGrantsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         *
          * @summary Get local filesystem chat setting
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7902,6 +8064,35 @@ export const DataSourcesApiFactory = function (configuration?: Configuration, ba
         },
         /**
          *
+         * @summary List independent read-only local directories
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsGet(options?: RawAxiosRequestConfig): AxiosPromise<LocalDirectoryGrantsResponse> {
+            return localVarFp.apiCoreDataSourcesLocalDirectoryGrantsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Revoke a local directory grant
+         * @param {DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsGrantDeleteRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(requestParameters: DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsGrantDeleteRequest, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(requestParameters.grant, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
+         * @summary Authorize on-demand local directory reading
+         * @param {DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreDataSourcesLocalDirectoryGrantsPost(requestParameters: DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<LocalDirectoryGrant> {
+            return localVarFp.apiCoreDataSourcesLocalDirectoryGrantsPost(requestParameters.localDirectoryGrantRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         *
          * @summary Get local filesystem chat setting
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7964,6 +8155,20 @@ export interface DataSourcesApiApiCoreDataSourcesDatabaseConnectionsConnectionSe
  */
 export interface DataSourcesApiApiCoreDataSourcesDatabaseConnectionsPostRequest {
     readonly databaseConnectionRequest: DatabaseConnectionRequest
+}
+
+/**
+ * Request parameters for apiCoreDataSourcesLocalDirectoryGrantsGrantDelete operation in DataSourcesApi.
+ */
+export interface DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsGrantDeleteRequest {
+    readonly grant: string
+}
+
+/**
+ * Request parameters for apiCoreDataSourcesLocalDirectoryGrantsPost operation in DataSourcesApi.
+ */
+export interface DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsPostRequest {
+    readonly localDirectoryGrantRequest: LocalDirectoryGrantRequest
 }
 
 /**
@@ -8051,6 +8256,38 @@ export class DataSourcesApi extends BaseAPI {
      */
     public apiCoreDataSourcesDatabaseConnectionsPost(requestParameters: DataSourcesApiApiCoreDataSourcesDatabaseConnectionsPostRequest, options?: RawAxiosRequestConfig) {
         return DataSourcesApiFp(this.configuration).apiCoreDataSourcesDatabaseConnectionsPost(requestParameters.databaseConnectionRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary List independent read-only local directories
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiCoreDataSourcesLocalDirectoryGrantsGet(options?: RawAxiosRequestConfig) {
+        return DataSourcesApiFp(this.configuration).apiCoreDataSourcesLocalDirectoryGrantsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Revoke a local directory grant
+     * @param {DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsGrantDeleteRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(requestParameters: DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsGrantDeleteRequest, options?: RawAxiosRequestConfig) {
+        return DataSourcesApiFp(this.configuration).apiCoreDataSourcesLocalDirectoryGrantsGrantDelete(requestParameters.grant, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     *
+     * @summary Authorize on-demand local directory reading
+     * @param {DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiCoreDataSourcesLocalDirectoryGrantsPost(requestParameters: DataSourcesApiApiCoreDataSourcesLocalDirectoryGrantsPostRequest, options?: RawAxiosRequestConfig) {
+        return DataSourcesApiFp(this.configuration).apiCoreDataSourcesLocalDirectoryGrantsPost(requestParameters.localDirectoryGrantRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -41508,6 +41745,176 @@ export class ToolsApi extends BaseAPI {
 
 
 /**
+ * TranslationApi - axios parameter creator
+ */
+export const TranslationApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Reports whether the current user has a selected translation provider with credentials. Secrets are never returned.
+         * @summary Get translation configuration status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreTranslationStatusGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/core/translation/status`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Translates up to 5000 characters with the current user\'s server-side translation credential.
+         * @summary Translate selected document text
+         * @param {TranslationOpenAPIRequest} translationOpenAPIRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreTranslationTranslatePost: async (translationOpenAPIRequest: TranslationOpenAPIRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'translationOpenAPIRequest' is not null or undefined
+            assertParamExists('apiCoreTranslationTranslatePost', 'translationOpenAPIRequest', translationOpenAPIRequest)
+            const localVarPath = `/api/core/translation:translate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(translationOpenAPIRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TranslationApi - functional programming interface
+ */
+export const TranslationApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = TranslationApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Reports whether the current user has a selected translation provider with credentials. Secrets are never returned.
+         * @summary Get translation configuration status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiCoreTranslationStatusGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TranslationStatusOpenAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiCoreTranslationStatusGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TranslationApi.apiCoreTranslationStatusGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Translates up to 5000 characters with the current user\'s server-side translation credential.
+         * @summary Translate selected document text
+         * @param {TranslationOpenAPIRequest} translationOpenAPIRequest
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiCoreTranslationTranslatePost(translationOpenAPIRequest: TranslationOpenAPIRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TranslationOpenAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiCoreTranslationTranslatePost(translationOpenAPIRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TranslationApi.apiCoreTranslationTranslatePost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * TranslationApi - factory interface
+ */
+export const TranslationApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = TranslationApiFp(configuration)
+    return {
+        /**
+         * Reports whether the current user has a selected translation provider with credentials. Secrets are never returned.
+         * @summary Get translation configuration status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreTranslationStatusGet(options?: RawAxiosRequestConfig): AxiosPromise<TranslationStatusOpenAPIResponse> {
+            return localVarFp.apiCoreTranslationStatusGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Translates up to 5000 characters with the current user\'s server-side translation credential.
+         * @summary Translate selected document text
+         * @param {TranslationApiApiCoreTranslationTranslatePostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiCoreTranslationTranslatePost(requestParameters: TranslationApiApiCoreTranslationTranslatePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<TranslationOpenAPIResponse> {
+            return localVarFp.apiCoreTranslationTranslatePost(requestParameters.translationOpenAPIRequest, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * Request parameters for apiCoreTranslationTranslatePost operation in TranslationApi.
+ */
+export interface TranslationApiApiCoreTranslationTranslatePostRequest {
+    readonly translationOpenAPIRequest: TranslationOpenAPIRequest
+}
+
+/**
+ * TranslationApi - object-oriented interface
+ */
+export class TranslationApi extends BaseAPI {
+    /**
+     * Reports whether the current user has a selected translation provider with credentials. Secrets are never returned.
+     * @summary Get translation configuration status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiCoreTranslationStatusGet(options?: RawAxiosRequestConfig) {
+        return TranslationApiFp(this.configuration).apiCoreTranslationStatusGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Translates up to 5000 characters with the current user\'s server-side translation credential.
+     * @summary Translate selected document text
+     * @param {TranslationApiApiCoreTranslationTranslatePostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public apiCoreTranslationTranslatePost(requestParameters: TranslationApiApiCoreTranslationTranslatePostRequest, options?: RawAxiosRequestConfig) {
+        return TranslationApiFp(this.configuration).apiCoreTranslationTranslatePost(requestParameters.translationOpenAPIRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * UploadsApi - axios parameter creator
  */
 export const UploadsApiAxiosParamCreator = function (configuration?: Configuration) {
@@ -43415,7 +43822,7 @@ export const WorkflowApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {string} sessionId
          * @param {string} slotId
          * @param {number} listIndex
@@ -43462,7 +43869,7 @@ export const WorkflowApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {string} sessionId
          * @param {WriterDocumentWriteBackOpenAPIRequest} writerDocumentWriteBackOpenAPIRequest
          * @param {*} [options] Override http request option.
@@ -43526,7 +43933,7 @@ export const WorkflowApiFp = function(configuration?: Configuration) {
         },
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {string} sessionId
          * @param {string} slotId
          * @param {number} listIndex
@@ -43542,7 +43949,7 @@ export const WorkflowApiFp = function(configuration?: Configuration) {
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {string} sessionId
          * @param {WriterDocumentWriteBackOpenAPIRequest} writerDocumentWriteBackOpenAPIRequest
          * @param {*} [options] Override http request option.
@@ -43575,7 +43982,7 @@ export const WorkflowApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {WorkflowApiApiCoreWorkflowSessionsSessionIdSlotsSlotIdItemsIdxListIndexSyncWriterDocumentPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -43585,7 +43992,7 @@ export const WorkflowApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {WorkflowApiApiCoreWorkflowSessionsSessionIdWriterDocumentWriteBackPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -43648,7 +44055,7 @@ export class WorkflowApi extends BaseAPI {
 
     /**
      *
-     * @summary Sync an edited WriterDocument to Feishu
+     * @summary Sync an edited WriterDocument to its cloud provider
      * @param {WorkflowApiApiCoreWorkflowSessionsSessionIdSlotsSlotIdItemsIdxListIndexSyncWriterDocumentPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -43659,7 +44066,7 @@ export class WorkflowApi extends BaseAPI {
 
     /**
      *
-     * @summary Write the active WriterDocument back to Feishu
+     * @summary Write the active WriterDocument back to its cloud provider
      * @param {WorkflowApiApiCoreWorkflowSessionsSessionIdWriterDocumentWriteBackPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -43678,7 +44085,7 @@ export const WriterApiAxiosParamCreator = function (configuration?: Configuratio
     return {
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {string} sessionId
          * @param {string} slotId
          * @param {number} listIndex
@@ -43725,7 +44132,7 @@ export const WriterApiAxiosParamCreator = function (configuration?: Configuratio
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {string} sessionId
          * @param {WriterDocumentWriteBackOpenAPIRequest} writerDocumentWriteBackOpenAPIRequest
          * @param {*} [options] Override http request option.
@@ -43773,7 +44180,7 @@ export const WriterApiFp = function(configuration?: Configuration) {
     return {
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {string} sessionId
          * @param {string} slotId
          * @param {number} listIndex
@@ -43789,7 +44196,7 @@ export const WriterApiFp = function(configuration?: Configuration) {
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {string} sessionId
          * @param {WriterDocumentWriteBackOpenAPIRequest} writerDocumentWriteBackOpenAPIRequest
          * @param {*} [options] Override http request option.
@@ -43812,7 +44219,7 @@ export const WriterApiFactory = function (configuration?: Configuration, basePat
     return {
         /**
          *
-         * @summary Sync an edited WriterDocument to Feishu
+         * @summary Sync an edited WriterDocument to its cloud provider
          * @param {WriterApiApiCoreWorkflowSessionsSessionIdSlotsSlotIdItemsIdxListIndexSyncWriterDocumentPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -43822,7 +44229,7 @@ export const WriterApiFactory = function (configuration?: Configuration, basePat
         },
         /**
          *
-         * @summary Write the active WriterDocument back to Feishu
+         * @summary Write the active WriterDocument back to its cloud provider
          * @param {WriterApiApiCoreWorkflowSessionsSessionIdWriterDocumentWriteBackPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -43861,7 +44268,7 @@ export interface WriterApiApiCoreWorkflowSessionsSessionIdWriterDocumentWriteBac
 export class WriterApi extends BaseAPI {
     /**
      *
-     * @summary Sync an edited WriterDocument to Feishu
+     * @summary Sync an edited WriterDocument to its cloud provider
      * @param {WriterApiApiCoreWorkflowSessionsSessionIdSlotsSlotIdItemsIdxListIndexSyncWriterDocumentPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -43872,7 +44279,7 @@ export class WriterApi extends BaseAPI {
 
     /**
      *
-     * @summary Write the active WriterDocument back to Feishu
+     * @summary Write the active WriterDocument back to its cloud provider
      * @param {WriterApiApiCoreWorkflowSessionsSessionIdWriterDocumentWriteBackPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

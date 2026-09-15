@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 import lazyllm
 from lazyllm.tools.agent import ToolExecutionError
 
+from lazymind.chat.engine.tools.native_search import native_search_available, search_native
 from lazymind.chat.engine.tools.text_edit import replace_exact_text_file
 
 _RG_BINARY = shutil.which('rg') or ''
@@ -38,16 +39,18 @@ class LocalFSScope:
     source_id: str
     roots: tuple[str, ...]
     file_extensions: frozenset[str]
+    read_only: bool = False
 
 
 class LocalFileToolkit:
-    """Tools for listing, searching, reading, and safely editing local text files.
+    """Discover files through the macOS/Windows system index, then inspect as permitted.
 
-    The tools can access only the local files and directories made available
-    for the current request.
+    Search discovers system-indexed paths without requiring configured directories.
+    Listing, glob, grep, text reading and editing stay within the local paths
+    authorized for the current request. A search result grants no additional access.
     """
 
-    __public_apis__ = ['ls', 'glob', 'grep', 'read', 'string_replace', 'info']
+    __public_apis__ = ['search', 'ls', 'glob', 'grep', 'read', 'string_replace', 'info']
 
     def _get_scopes(self) -> List[LocalFSScope]:
         config = lazyllm.globals.get('agentic_config') or {}
@@ -67,13 +70,33 @@ class LocalFileToolkit:
             roots = tuple(path for path in paths if isinstance(path, str) and path.strip())
             extensions = frozenset(ext for ext in file_extensions if isinstance(ext, str) and ext.strip())
             if roots and extensions:
-                scopes.append(LocalFSScope(source_id=source_id, roots=roots, file_extensions=extensions))
+                scopes.append(LocalFSScope(
+                    source_id=source_id, roots=roots, file_extensions=extensions,
+                    read_only=source.get('read_only', False) is not False,
+                ))
         return scopes
 
     def __key_source__(self) -> Any:
-        return self._get_scopes()
+        return self._get_scopes() or native_search_available()
 
-    def _resolve_with_scope(self, target: str) -> tuple[str, LocalFSScope]:
+    def search(self, query: str, match: str = 'either', path: str = '',
+               kind: str = 'any', limit: int = 30) -> dict:
+        """Discover local files using the current OS index, without reading bodies.
+
+        Args:
+            query: Literal keywords, not a natural-language question or query expression.
+            match: name, content, or either. Matching follows the OS index semantics.
+            path: Optional directory scope; empty uses the system's indexed file scope.
+            kind: any, file, or directory.
+            limit: Maximum results, between 1 and 100.
+
+        Returns:
+            Paths and metadata with index coverage and partial/error status. Discovery
+            does not grant read or write permission. Use existing readers when needed.
+        """
+        return search_native(query, match, path, kind, limit)
+
+    def _resolve_with_scope(self, target: str, *, write: bool = False) -> tuple[str, LocalFSScope]:
         """Resolve *target* to an absolute path within a configured source.
 
         Raises:
@@ -83,14 +106,31 @@ class LocalFileToolkit:
         if not scopes:
             raise ToolExecutionError('No local filesystem paths are configured')
         target = os.path.realpath(target)
+        is_file = os.path.isfile(target)
+        matching_scope = None
         for scope in scopes:
+            if write and scope.read_only:
+                continue
             for root in scope.roots:
                 base = os.path.realpath(root)
+                # Independent grants store canonical roots. Retargeting a parent
+                # symlink must not move an existing grant to another directory.
+                if scope.read_only and base != root:
+                    continue
                 try:
                     if os.path.commonpath([base, target]) == base:
-                        return target, scope
+                        if not is_file or self._is_visible_file(scope, target):
+                            return target, scope
+                        # Overlapping grants can allow different extensions. Keep
+                        # searching before reporting an extension restriction.
+                        if matching_scope is None:
+                            matching_scope = scope
                 except ValueError:
                     continue
+        if matching_scope is not None:
+            return target, matching_scope
+        if write:
+            raise ToolExecutionError(f'Write access is not authorized for path: {target}')
         roots = [root for scope in scopes for root in scope.roots]
         raise ToolExecutionError(f'Path {target} is not within allowed paths: {roots}')
 
@@ -109,6 +149,8 @@ class LocalFileToolkit:
             for scope in scopes:
                 for root in scope.roots:
                     resolved = os.path.realpath(root)
+                    if scope.read_only and resolved != root:
+                        continue
                     if os.path.isdir(resolved):
                         roots.append((resolved, scope))
             return roots
@@ -447,7 +489,7 @@ class LocalFileToolkit:
             Replacement count and updated file metadata. On mismatch or any
             error, the original file remains unchanged.
         """
-        safe_path, scope = self._resolve_with_scope(filepath)
+        safe_path, scope = self._resolve_with_scope(filepath, write=True)
         if not os.path.isfile(safe_path):
             raise ToolExecutionError(f'File not found: {filepath}')
         self._ensure_visible_file(scope, safe_path)

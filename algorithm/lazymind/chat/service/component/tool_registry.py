@@ -753,10 +753,10 @@ DEFAULT_TOOLS: list[ToolConfig] = [
     ToolConfig(
         name='local_fs',
         label='本地文件',
-        description='在配置的本地路径内进行 glob 匹配、grep 搜索、文件读取和精确文本替换',
+        description='通过系统索引发现本地文件；在授权路径内进行 glob、grep、读取和精确文本替换',
         tool=LocalFileToolkit(), module='data',
         label_en='Local Files',
-        description_en='Glob, grep, read, and perform exact text replacements within configured local paths.',
+        description_en='Discover files through the OS index; glob, grep, read, and edit within authorized local paths.',
     ),
     ToolConfig(
         name='cloud_files', label='云文件', description='浏览、搜索和管理已连接的云文件系统',

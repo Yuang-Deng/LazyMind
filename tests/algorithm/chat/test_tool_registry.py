@@ -346,3 +346,12 @@ def test_tool_catalog_localizes_display_fields_without_changing_runtime_descript
     for group_config in [*DEFAULT_TOOLS, SKILL_TOOL_CONFIG]:
         assert group_config.label_en.strip()
         assert group_config.description_en.strip()
+
+
+def test_native_search_registration_without_authorized_directories(monkeypatch):
+    from lazymind.chat.engine.tools import local_fs
+    monkeypatch.setattr(local_fs, 'native_search_available', lambda: True)
+    assert 'local_fs' in _active_tool_names()
+    assert 'spotlight' not in {cfg.name for cfg in DEFAULT_TOOLS}
+    group = _tool_group('local_fs')
+    assert any(method['name'] == 'search' for method in group['methods'])

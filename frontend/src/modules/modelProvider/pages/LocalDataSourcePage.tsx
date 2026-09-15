@@ -1,3 +1,4 @@
+import LocalDirectoryGrants from "../components/LocalDirectoryGrants";
 import { useMemo } from "react";
 import { Alert, Button, Empty, Modal, Spin, Tree, Typography } from "antd";
 import type { DataNode } from "antd/es/tree";
@@ -178,6 +179,8 @@ export default function LocalDataSourcePage() {
               </div>
             </div>
           </div>
+
+          <LocalDirectoryGrants canManage={canCreateLocalSource} />
 
           <div className="model-provider-cloud-doc-setting-card is-directory-config">
             <div className="model-provider-cloud-doc-setting-head">

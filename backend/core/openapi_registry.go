@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"lazymind/core/common/orm"
 	"reflect"
 	"sort"
 	"strings"
@@ -2529,6 +2530,22 @@ func registeredCoreOperations() []openAPIOperation {
 			PathParams:  datasetPathParams{},
 			RequestBody: jsonBodyOf(doc.UnsetDefaultDatasetRequest{}, true),
 			Responses:   map[int]openAPIResponse{200: refResp("Unset successfully", "EmptyObject")},
+		},
+		{
+			Method: "GET", Path: "/data-sources/local-directory-grants", Summary: "List independent read-only local directories", Tags: []string{"data-sources"},
+			Responses: map[int]openAPIResponse{200: resp("Local directory grants", datasource.LocalDirectoryGrantsResponse{})},
+		},
+		{
+			Method: "POST", Path: "/data-sources/local-directory-grants", Summary: "Authorize on-demand local directory reading", Tags: []string{"data-sources"},
+			RequestBody: jsonBodyOf(datasource.LocalDirectoryGrantRequest{}, true),
+			Responses:   map[int]openAPIResponse{200: resp("Read-only directory grant", orm.LocalDirectoryGrant{})},
+		},
+		{
+			Method: "DELETE", Path: "/data-sources/local-directory-grants/{grant}", Summary: "Revoke a local directory grant", Tags: []string{"data-sources"},
+			PathParams: struct {
+				Grant string `path:"grant"`
+			}{},
+			Responses: map[int]openAPIResponse{200: refResp("Revoked successfully", "EmptyObject")},
 		},
 		{
 			Method:    "GET",

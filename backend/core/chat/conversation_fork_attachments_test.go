@@ -66,7 +66,7 @@ func TestForkLocalSourceRevalidationOnlyInspectsInheritedHistory(t *testing.T) {
 				histories = append(histories, inherited)
 			}
 			before, _ := json.Marshal(histories)
-			projected, err := revalidateForkHistoryAttachments(context.Background(), nil, doc.DatasetCatalogCaller{UserID: "u1"}, histories)
+			projected, err := revalidateForkHistoryAttachments(context.Background(), orm.MigrateTestDB(t, &orm.LocalDirectoryGrant{}).DB, doc.DatasetCatalogCaller{UserID: "u1"}, histories)
 			if requests != tc.wantRequests {
 				t.Errorf("scan requests = %d, want %d", requests, tc.wantRequests)
 			}

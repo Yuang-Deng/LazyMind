@@ -26,7 +26,8 @@ def _source(source_id, paths, extensions):
 def test_local_fs_key_source_is_empty_without_config(monkeypatch):
     monkeypatch.setattr(local_fs_mod.lazyllm, 'globals', {})
 
-    assert LocalFileToolkit().__key_source__() == []
+    monkeypatch.setattr(local_fs_mod, 'native_search_available', lambda: False)
+    assert not LocalFileToolkit().__key_source__()
 
 
 def test_local_fs_ls_lists_roots_and_filters_directory_files(monkeypatch, tmp_path):
@@ -195,3 +196,64 @@ def test_local_fs_rg_includes_hidden_and_no_ignore_flags(monkeypatch, tmp_path):
     assert LocalFileToolkit().glob('*.pdf')['match_count'] == 1
     assert LocalFileToolkit().grep('needle')['match_count'] == 1
     assert all('--no-ignore' in args and '--hidden' in args for args in calls)
+
+
+def test_independent_grant_is_read_only_and_revocable(monkeypatch, tmp_path):
+    root = tmp_path.resolve()
+    target = root / 'notes.txt'
+    target.write_text('original', encoding='utf-8')
+    grant = {**_source('local-grant:1', [root], ['txt']), 'read_only': True}
+    _set_local_fs_sources(monkeypatch, [grant])
+    tool = LocalFileToolkit()
+    assert tool.read(str(target))['content'] == 'original'
+    with pytest.raises(ToolExecutionError):
+        tool.string_replace(str(target), 'original', 'changed')
+    assert target.read_text() == 'original'
+    # A separate pre-existing write grant still works, independent of ordering.
+    _set_local_fs_sources(monkeypatch, [grant, _source('legacy', [root], ['txt'])])
+    tool.string_replace(str(target), 'original', 'changed')
+    assert target.read_text() == 'changed'
+    _set_local_fs_sources(monkeypatch, [])
+    with pytest.raises(ToolExecutionError):
+        tool.read(str(target))
+
+
+def test_independent_grant_rejects_extension_escape_and_retarget(monkeypatch, tmp_path):
+    root = (tmp_path / 'root').resolve()
+    outside = (tmp_path / 'outside').resolve()
+    root.mkdir()
+    outside.mkdir()
+    (outside / 'secret.txt').write_text('secret')
+    (root / 'secret.txt').symlink_to(outside / 'secret.txt')
+    (root / 'blocked.csv').write_text('blocked')
+    _set_local_fs_sources(monkeypatch, [{
+        **_source('local-grant:1', [root], ['txt']), 'read_only': True,
+    }])
+    tool = LocalFileToolkit()
+    for target in [root / 'secret.txt', root / 'blocked.csv', root / '..' / 'outside' / 'secret.txt']:
+        with pytest.raises(ToolExecutionError):
+            tool.read(str(target))
+    root.rename(tmp_path / 'old-root')
+    root.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ToolExecutionError):
+        tool.read(str(root / 'secret.txt'))
+    assert tool.ls()['entries'] == []
+
+
+def test_read_only_grant_does_not_shadow_other_grants_file_types(monkeypatch, tmp_path):
+    root = tmp_path.resolve()
+    text = root / 'notes.txt'
+    markdown = root / 'notes.md'
+    text.write_text('text')
+    markdown.write_text('markdown')
+    readonly = {**_source('local-grant:1', [root], ['txt']), 'read_only': True}
+    legacy = _source('legacy', [root], ['md'])
+    tool = LocalFileToolkit()
+    for grants in [[readonly, legacy], [legacy, readonly]]:
+        _set_local_fs_sources(monkeypatch, grants)
+        assert tool.read(str(text))['source_id'] == 'local-grant:1'
+        assert tool.read(str(markdown))['source_id'] == 'legacy'
+        with pytest.raises(ToolExecutionError):
+            tool.string_replace(str(text), 'text', 'changed')
+    tool.string_replace(str(markdown), 'markdown', 'changed')
+    assert markdown.read_text() == 'changed'
